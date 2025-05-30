@@ -7,7 +7,7 @@ import numpy as np
 
 # --- App Title ---
 st.set_page_config(page_title="🎬 VidGist – Smart Video Summarization Tool", layout="wide")
-st.title("🎥 AI-Powered Video Activity Detector")
+st.title("🎬 VidGist – Smart Video Summarization Tool")
 st.markdown("Upload a video and get a **summary of detected objects and activities** using YOLOv8.")
 
 # --- Sidebar ---
