@@ -5,7 +5,7 @@ import tempfile
 import os
 
 # Load YOLOv8 model
-model = YOLO("yolov8n.pt")  # You can use yolov8s.pt or yolov8m.pt
+model = YOLO("yolov8n.pt")  # Ensure this model is accessible
 
 st.title("🔍 Video Activity Detection using YOLOv8")
 st.write("Upload a video and get a summary of detected activities.")
