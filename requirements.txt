@@ -4,3 +4,6 @@ ultralytics==8.1.36
 torch>=2.0
 Pillow
 
+git add requirements.txt
+git commit -m "Fix opencv error for Streamlit Cloud"
+git push
