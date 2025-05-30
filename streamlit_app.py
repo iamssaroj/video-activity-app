@@ -1,43 +1,45 @@
 import streamlit as st
 import cv2
-import tempfile
 from ultralytics import YOLO
-from collections import Counter
-import numpy as np
+import tempfile
+import os
 
-st.title("🎬 Video Activity Detection and Summary")
+# Load YOLOv8 model
+model = YOLO("yolov8n.pt")  # You can use yolov8s.pt or yolov8m.pt
 
-uploaded_file = st.file_uploader("Upload your video", type=["mp4", "avi", "mov"])
+st.title("🔍 Video Activity Detection using YOLOv8")
+st.write("Upload a video and get a summary of detected activities.")
 
-if uploaded_file is not None:
-    temp_video = tempfile.NamedTemporaryFile(delete=False)
-    temp_video.write(uploaded_file.read())
+uploaded_file = st.file_uploader("📤 Upload Video", type=["mp4", "avi", "mov"])
 
-    cap = cv2.VideoCapture(temp_video.name)
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    frames = []
-    count = 0
+if uploaded_file:
+    # Save uploaded video temporarily
+    tfile = tempfile.NamedTemporaryFile(delete=False)
+    tfile.write(uploaded_file.read())
+
+    cap = cv2.VideoCapture(tfile.name)
+    frame_count = 0
+    detected_objects = {}
+
+    stframe = st.empty()
+    st.write("Processing... please wait ⏳")
 
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
-        if count % fps == 0:
-            frames.append(frame)
-        count += 1
+
+        frame_count += 1
+        if frame_count % 30 == 0:  # process every 30th frame
+            results = model(frame)[0]
+            for result in results.boxes.cls:
+                label = model.names[int(result)]
+                detected_objects[label] = detected_objects.get(label, 0) + 1
+
     cap.release()
 
-    st.write(f"✅ Extracted {len(frames)} key frames")
-
-    model = YOLO("yolov8n.pt")
-    all_labels = []
-
-    for frame in frames:
-        result = model(frame)[0]
-        labels = [model.names[int(cls)] for cls in result.boxes.cls]
-        all_labels.extend(labels)
-
-    summary = Counter(all_labels).most_common()
-    st.subheader("📝 Activity Summary")
-    for label, count in summary:
-        st.write(f"• **{label.capitalize()}** detected **{count}** times")
+    # Summary
+    st.success("✅ Video processed!")
+    st.subheader("📊 Detected Object Summary")
+    for obj, count in detected_objects.items():
+        st.write(f"🔹 {obj}: {count} times")
