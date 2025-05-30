@@ -18,26 +18,44 @@ if uploaded_file is not None:
     frames = []
     count = 0
 
+    # Sample a frame every 0.5 seconds for better activity coverage
+    sampling_rate = max(1, fps // 2)
+
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
-        if count % fps == 0:
+        if count % sampling_rate == 0:
+            frame = cv2.resize(frame, (640, 480))  # Resize for consistency
             frames.append(frame)
         count += 1
     cap.release()
 
     st.write(f"✅ Extracted {len(frames)} key frames")
 
-    model = YOLO("yolov8n.pt")
+    # Use a more accurate YOLOv8 model (medium version)
+    model = YOLO("yolov8m.pt")
+
     all_labels = []
 
-    for frame in frames:
+    progress_bar = st.progress(0)
+    for i, frame in enumerate(frames):
         result = model(frame)[0]
-        labels = [model.names[int(cls)] for cls in result.boxes.cls]
+
+        # Filter predictions by confidence threshold (0.5)
+        labels = [
+            model.names[int(cls)]
+            for cls, conf in zip(result.boxes.cls, result.boxes.conf)
+            if conf > 0.5
+        ]
         all_labels.extend(labels)
+        progress_bar.progress((i + 1) / len(frames))
 
     summary = Counter(all_labels).most_common()
+
     st.subheader("📝 Activity Summary")
-    for label, count in summary:
-        st.write(f"• **{label.capitalize()}** detected **{count}** times")
+    if summary:
+        for label, count in summary:
+            st.write(f"• **{label.capitalize()}** detected **{count}** times")
+    else:
+        st.write("No confident objects detected.")
